@@ -93,7 +93,7 @@ export function AuthModal({ isOpen, onClose, onLogout }) {
       await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: "https://blogico.vercel.app/", // yahan apna domain daalo
+          redirectTo: "https://blogico.vercel.app/auth/callback", // ✅ production callback
         },
       });
       // redirect ho jayega, yahan koi error check ki zaroorat nahi
