@@ -5,7 +5,7 @@ import "./globals.css";
 import Providers from "@/components/Providers";
 
 export const metadata = {
-  title: "BlogHub - Your Favorite Blog Platform",
+  title: "Blogico - Your Favorite Blog Platform",
   description: "Discover, read, and save your favorite blogs",
   generator: "v0.app",
 };
