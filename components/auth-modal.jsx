@@ -93,9 +93,10 @@ export function AuthModal({ isOpen, onClose, onLogout }) {
       await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: "https://blogico.vercel.app/auth/callback", // ✅ production callback
+          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
         },
       });
+
       // redirect ho jayega, yahan koi error check ki zaroorat nahi
     } catch (err) {
       setError(err.message || "Google sign-in failed");
