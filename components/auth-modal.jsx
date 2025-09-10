@@ -12,12 +12,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/lib/supabaseClient";
 import { Chrome, Loader2 } from "lucide-react";
 import React, { useState } from "react";
 import UserProfileModal from "./user-profile";
-
+import { useProfile } from "@/contexts/profile-context";
+import { useAuth } from "@/contexts/auth-context";
 export function AuthModal({ isOpen, onClose, onLogout }) {
   const [mode, setMode] = useState("login");
   const [isLoading, setIsLoading] = useState(false);
@@ -25,7 +25,8 @@ export function AuthModal({ isOpen, onClose, onLogout }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { currentUser } = useAuth();
+  const { currentUser } = useProfile();
+  const { logout } = useAuth();
   console.log(currentUser);
 
   async function handleRegister(e) {
@@ -104,21 +105,6 @@ export function AuthModal({ isOpen, onClose, onLogout }) {
     }
   }
 
-  const handleLogout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-
-      // Optional: clear your local state/context after logout
-      setProfileData(null);
-      setCurrentUser(null);
-
-      console.log("User logged out");
-    } catch (err) {
-      console.error("Logout error:", err.message);
-    }
-  };
-
   return (
     <div>
       {currentUser ? (
@@ -126,7 +112,7 @@ export function AuthModal({ isOpen, onClose, onLogout }) {
           open={isOpen}
           onOpenChange={(open) => !open && onClose()}
           currentUser={currentUser}
-          onLogout={handleLogout}
+          onLogout={logout}
         />
       ) : (
         // ❌ If no user → show Auth modal

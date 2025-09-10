@@ -29,7 +29,7 @@ export default function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  const { profileData, avatar } = useProfile();
+  const { profileData, avatarUrl, avatarFallback } = useProfile();
 
   // Mock favorite blogs
   const favoriteBlogs = [
@@ -186,26 +186,24 @@ export default function Navbar() {
             <div className="p-4 border-b">
               <div className="flex items-center space-x-3">
                 <Avatar className="h-10 w-10">
-                  {avatar ? (
+                  {avatarUrl ? (
                     <AvatarImage
-                      src={avatar}
-                      alt={profileData?.username || "User"}
+                      src={avatarUrl}
+                      alt={profileData?.name || "User"}
                     />
                   ) : (
-                    <AvatarFallback>
-                      {profileData?.email?.charAt(0).toUpperCase() || "?"}
-                    </AvatarFallback>
+                    <AvatarFallback>{avatarFallback}</AvatarFallback>
                   )}
                 </Avatar>
                 <div>
                   <div className="font-medium">
                     {profileData
-                      ? profileData.username.charAt(0).toUpperCase() +
-                        profileData.username.slice(1)
+                      ? profileData.name.charAt(0).toUpperCase() +
+                        profileData.name.slice(1)
                       : "Guest User"}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {profileData ? profileData.useremail : "Not logged in"}
+                    {profileData?.email ? profileData?.email : "Not logged"}
                   </div>
                 </div>
               </div>

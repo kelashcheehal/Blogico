@@ -2,90 +2,93 @@
 
 import { supabase } from "@/lib/supabaseClient";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { useAuth } from "./auth-context";
 
 const ProfileContext = createContext(null);
 
 const ProfileProvider = ({ children }) => {
-  const { currentUser } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
   const [profileData, setProfileData] = useState(null);
-  const [loadingProfile, setLoadingProfile] = useState(false);
-  const [error, setError] = useState(null);
-  // 🔹 Fetch profile whenever user changes
-  useEffect(() => {
-    if (!currentUser?.id) {
-      setProfileData(null);
-      return;
-    }
+  console.log(profileData?.name);
 
+  // Current User
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) console.error(error.message);
+      setCurrentUser(data.session?.user || null);
+      setIsLoading(false);
+    };
+
+    getCurrentUser();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setCurrentUser(session?.user ?? null);
+        setIsLoading(false);
+      }
+    );
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  // Profile Data
+  useEffect(() => {
     const getProfileData = async () => {
-      setLoadingProfile(true);
+      if (!currentUser) return;
+
       const { data, error } = await supabase
         .from("users")
         .select("*")
         .eq("id", currentUser.id)
-        .maybeSingle();
-
-      if (error) {
-        setError(error);
-      } else {
-        setProfileData(data);
-      }
-      setLoadingProfile(false);
+        .single();
+      if (error) console.log(error.message);
+      setProfileData(data);
     };
-
     getProfileData();
   }, [currentUser]);
 
-  // 🔹 Update profile
-  const updateProfile = async (updates) => {
-    if (!currentUser?.id) throw new Error("Not authenticated");
+  // Avatar URL
+  const avatarUrl =
+    profileData?.avatar || currentUser?.user_metadata?.avatar_url || null;
+  const avatarFallback = currentUser?.email?.charAt(0).toUpperCase() || "?";
 
-    const { data, error } = await supabase
-      .from("users")
-      .update(updates)
-      .eq("id", currentUser.id)
-      .select()
-      .maybeSingle();
-
-    if (error) throw error;
-
-    setProfileData(data);
-    return data;
-  };
-
-  // 🔹 Avatar (real Google avatar if available)
-  const avatar = useMemo(() => {
-    if (profileData?.avatar) return profileData.avatar;
-    if (currentUser?.user_metadata?.avatar_url)
-      return currentUser.user_metadata.avatar_url;
-
-    return null;
-  }, [profileData?.avatar, currentUser?.user_metadata?.avatar_url]);
-
-  // 🔹 Display name (priority: Auth → DB → fallback)
   const displayName = useMemo(() => {
-    return (
-      currentUser?.user_metadata?.full_name ||
-      currentUser?.user_metadata?.name ||
-      currentUser?.user_metadata?.username ||
-      profileData?.username ||
-      profileData?.full_name ||
-      "User"
-    );
-  }, [currentUser, profileData]);
+    if (profileData?.name) {
+      return profileData.name;
+    }
 
-  const value = useMemo(
-    () => ({
+    // 2. Agar Google OAuth ka name hai
+    if (currentUser?.user_metadata?.full_name) {
+      return currentUser.user_metadata.full_name;
+    }
+
+    return "?";
+  }, [
+    profileData?.name,
+    currentUser?.user_metadata?.full_name,
+    currentUser?.email,
+  ]);
+
+  console.log(displayName);
+
+  const value = useMemo(() => {
+    return {
+      currentUser,
+      displayName,
+      avatarUrl,
+      avatarFallback,
       profileData,
-      loadingProfile,
-      updateProfile,
-      avatar,
-      displayName, // 👈 ab yaha directly available
-    }),
-    [profileData, loadingProfile, avatar, displayName]
-  );
-
+      isLoading,
+    };
+  }, [
+    currentUser,
+    displayName,
+    avatarUrl,
+    avatarFallback,
+    profileData,
+    isLoading,
+  ]);
   return (
     <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>
   );

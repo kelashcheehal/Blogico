@@ -14,20 +14,9 @@ import { useProfile } from "@/contexts/profile-context";
 import { useAuth } from "@/contexts/auth-context";
 
 export default function UserProfileModal({ open, onOpenChange, currentUser }) {
-  const { avatar, profileData, displayName } = useProfile();
+  const { avatarUrl, profileData, displayName, avatarFallback } = useProfile();
   const { logout } = useAuth();
   const [loading, setLoading] = useState(false);
-
-  const logoutClick = async () => {
-    setLoading(true);
-    await logout();
-    setLoading(false);
-  };
-
-  const fallbackChar =
-    profileData?.username?.charAt(0).toUpperCase() ||
-    currentUser?.email?.charAt(0).toUpperCase() ||
-    "?";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -40,21 +29,19 @@ export default function UserProfileModal({ open, onOpenChange, currentUser }) {
         <div className="border-b w-full">
           <div className="flex items-center space-x-3 py-3">
             <Avatar className="h-10 w-10">
-              {avatar && avatar.trim() !== "" ? (
+              {avatarUrl ? (
                 <AvatarImage
-                  src={avatar}
-                  alt={profileData?.username || "User"}
+                  src={avatarUrl}
+                  alt={profileData?.name || "User"}
                 />
               ) : null}
               <AvatarFallback className="bg-gray-200 text-gray-700 font-medium">
-                {fallbackChar}
+                {avatarFallback}
               </AvatarFallback>
             </Avatar>
 
             <div>
-              <div className="font-medium">
-                {displayName}
-              </div>
+              <div className="font-medium">{displayName}</div>
               <div className="text-sm text-muted-foreground">
                 {currentUser?.email}
               </div>
@@ -64,7 +51,7 @@ export default function UserProfileModal({ open, onOpenChange, currentUser }) {
 
         {/* Logout Button */}
         <Button
-          onClick={logoutClick}
+          onClick={logout}
           disabled={loading}
           variant="outline"
           className="w-full flex items-center justify-center gap-2 rounded-lg border-gray-300"
