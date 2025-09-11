@@ -11,6 +11,7 @@ import {
   BookOpen,
   Info,
   Mail,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,12 +22,14 @@ import FavoritesModal from "./favorites-modal";
 import SearchModal from "./search-modal";
 import { AuthModal } from "./auth-modal";
 import { useProfile } from "@/contexts/profile-context";
+import BlogModal from "./blog-modal";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isBlogOpen, setIsBlogOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const { profileData, avatarUrl, avatarFallback } = useProfile();
@@ -43,9 +46,10 @@ export default function Navbar() {
   const navLinks = useMemo(
     () => [
       { name: "Home", href: "/", icon: Home },
-      { name: "Blog", href: "/blog", icon: BookOpen },
+      { name: "Blogs", href: "/blogs", icon: BookOpen },
       { name: "About", href: "/about", icon: Info },
       { name: "Contact", href: "/contact", icon: Mail },
+      { name: "Create Blog", href: "/create-blog", icon: Plus },
     ],
     []
   );
@@ -106,6 +110,14 @@ export default function Navbar() {
             {/* Action Buttons */}
             <div className="flex items-center gap-1">
               {/* Search Button */}
+               <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsBlogOpen(true)}
+                className="hover:bg-accent transition-all duration-200 hover:scale-105"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
@@ -250,6 +262,8 @@ export default function Navbar() {
         onLogin={handleLogin}
         onLogout={handleLogout}
       />
+
+      <BlogModal isOpen={isBlogOpen} onClose={() => setIsBlogOpen(false)} />
     </>
   );
 }

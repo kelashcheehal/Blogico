@@ -87,24 +87,6 @@ export function AuthModal({ isOpen, onClose, onLogout }) {
     }
   }
 
-  async function handleGoogleAuth() {
-    setIsLoading(true);
-    setError("");
-    try {
-      await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
-        },
-      });
-
-      // redirect ho jayega, yahan koi error check ki zaroorat nahi
-    } catch (err) {
-      setError(err.message || "Google sign-in failed");
-      setIsLoading(false);
-    }
-  }
-
   return (
     <div>
       {currentUser ? (
@@ -115,7 +97,6 @@ export function AuthModal({ isOpen, onClose, onLogout }) {
           onLogout={logout}
         />
       ) : (
-        // ❌ If no user → show Auth modal
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
           <DialogContent className="w-full sm:max-w-md rounded-2xl p-6">
             <DialogHeader className="space-y-1 text-center">
@@ -188,16 +169,6 @@ export function AuthModal({ isOpen, onClose, onLogout }) {
                       OR
                     </span>
                   </div>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    onClick={handleGoogleAuth}
-                    disabled={isLoading}
-                  >
-                    <Chrome className="mr-2 h-4 w-4" /> Continue with Google
-                  </Button>
                 </form>
               </TabsContent>
 
@@ -259,16 +230,6 @@ export function AuthModal({ isOpen, onClose, onLogout }) {
                       OR
                     </span>
                   </div>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    onClick={handleGoogleAuth}
-                    disabled={isLoading}
-                  >
-                    <Chrome className="mr-2 h-4 w-4" /> Continue with Google
-                  </Button>
                 </form>
               </TabsContent>
             </Tabs>
