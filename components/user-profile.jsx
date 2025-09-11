@@ -13,45 +13,52 @@ import { useState } from "react";
 import { useProfile } from "@/contexts/profile-context";
 import { useAuth } from "@/contexts/auth-context";
 
-export default function UserProfileModal({ open, onOpenChange, currentUser }) {
-  const { avatarUrl, profileData, displayName, avatarFallback } = useProfile();
-  const { logout } = useAuth();
+export default function UserProfileModal({ open, onOpenChange }) {
+  const { avatarUrl, profileData, displayName, avatarFallback, currentUser } =
+    useProfile();
+  const { logout, isLoading } = useAuth();
   const [loading, setLoading] = useState(false);
+
+  const userName = profileData?.name || displayName || "?";
+  const email = currentUser?.email || "No email";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm rounded-xl shadow-lg flex flex-col items-center">
-        {/* ✅ Required for accessibility */}
+        {/* Accessibility */}
         <DialogHeader className="w-full">
           <DialogTitle className="sr-only">User Profile</DialogTitle>
         </DialogHeader>
 
+        {/* User Info */}
         <div className="border-b w-full">
           <div className="flex items-center space-x-3 py-3">
             <Avatar className="h-10 w-10">
               {avatarUrl ? (
-                <AvatarImage
-                  src={avatarUrl}
-                  alt={profileData?.name || "User"}
-                />
+                <AvatarImage src={avatarUrl} alt={userName} />
               ) : null}
               <AvatarFallback className="bg-gray-200 text-gray-700 font-medium">
-                {avatarFallback}
+                {avatarFallback || "?"}
               </AvatarFallback>
             </Avatar>
 
             <div>
-              <div className="font-medium">{displayName}</div>
-              <div className="text-sm text-muted-foreground">
-                {currentUser?.email}
-              </div>
+              <div className="font-medium">{userName}</div>
+              <div className="text-sm text-muted-foreground">{email}</div>
             </div>
           </div>
         </div>
 
         {/* Logout Button */}
         <Button
-          onClick={logout}
+          onClick={async () => {
+            setLoading(true);
+            try {
+              await logout();
+            } finally {
+              setLoading(false);
+            }
+          }}
           disabled={loading}
           variant="outline"
           className="w-full flex items-center justify-center gap-2 rounded-lg border-gray-300"

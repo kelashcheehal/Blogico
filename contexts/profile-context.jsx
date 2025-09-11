@@ -9,23 +9,68 @@ const ProfileProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [profileData, setProfileData] = useState(null);
-  console.log(profileData?.name);
+
+  // ✅ Helper function: Save user in DB if not exists
+  const saveUser = async (user) => {
+    if (!user) return;
+
+    const { data: existingUser, error: selectError } = await supabase
+      .from("users")
+      .select("id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (selectError) {
+      console.error("Select error:", selectError.message);
+      return;
+    }
+
+    if (!existingUser) {
+      const { error: insertError } = await supabase.from("users").insert([
+        {
+          id: user.id,
+          name: user.user_metadata.full_name || user.user_metadata.name || "",
+          email: user.email,
+          role: "user",
+        },
+      ]);
+
+      if (insertError) {
+        console.error("Insert error:", insertError.message);
+      } else {
+        console.log("✅ User inserted successfully");
+      }
+    }
+  };
 
   // Current User
   useEffect(() => {
     const getCurrentUser = async () => {
       const { data, error } = await supabase.auth.getSession();
       if (error) console.error(error.message);
-      setCurrentUser(data.session?.user || null);
+
+      const user = data.session?.user || null;
+      setCurrentUser(user);
       setIsLoading(false);
+
+      // ✅ First login -> save in DB
+      if (user) {
+        await saveUser(user);
+      }
     };
 
     getCurrentUser();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setCurrentUser(session?.user ?? null);
+      async (_event, session) => {
+        const user = session?.user ?? null;
+        setCurrentUser(user);
         setIsLoading(false);
+
+        // ✅ New session (Google login, etc.)
+        if (user) {
+          await saveUser(user);
+        }
       }
     );
 
@@ -40,9 +85,21 @@ const ProfileProvider = ({ children }) => {
       const { data, error } = await supabase
         .from("users")
         .select("*")
-        .eq("id", currentUser.id)
-        .single();
-      if (error) console.log(error.message);
+        .eq("id", currentUser?.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Profile fetch error:", error.message);
+        setProfileData(null);
+        return;
+      }
+
+      if (!data) {
+        console.log("No user row found in users table");
+        setProfileData(null);
+        return;
+      }
+
       setProfileData(data);
     };
     getProfileData();
@@ -54,15 +111,9 @@ const ProfileProvider = ({ children }) => {
   const avatarFallback = currentUser?.email?.charAt(0).toUpperCase() || "?";
 
   const displayName = useMemo(() => {
-    if (profileData?.name) {
-      return profileData.name;
-    }
-
-    // 2. Agar Google OAuth ka name hai
-    if (currentUser?.user_metadata?.full_name) {
+    if (profileData?.name) return profileData.name;
+    if (currentUser?.user_metadata?.full_name)
       return currentUser.user_metadata.full_name;
-    }
-
     return "?";
   }, [
     profileData?.name,
@@ -70,25 +121,26 @@ const ProfileProvider = ({ children }) => {
     currentUser?.email,
   ]);
 
-  console.log(displayName);
-
-  const value = useMemo(() => {
-    return {
+  const value = useMemo(
+    () => ({
       currentUser,
       displayName,
       avatarUrl,
       avatarFallback,
       profileData,
       isLoading,
-    };
-  }, [
-    currentUser,
-    displayName,
-    avatarUrl,
-    avatarFallback,
-    profileData,
-    isLoading,
-  ]);
+      setCurrentUser,
+    }),
+    [
+      currentUser,
+      displayName,
+      avatarUrl,
+      avatarFallback,
+      profileData,
+      isLoading,
+    ]
+  );
+
   return (
     <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>
   );

@@ -48,8 +48,8 @@ export function AuthModal({ isOpen, onClose, onLogout }) {
       const { error: insertError } = await supabase.from("users").insert([
         {
           id: userId, // same as auth.users ka id
-          username: name,
-          useremail: email,
+          name: name,
+          email: email,
           role: "user",
         },
       ]);
