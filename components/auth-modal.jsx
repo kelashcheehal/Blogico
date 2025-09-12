@@ -27,7 +27,6 @@ export function AuthModal({ isOpen, onClose, onLogout }) {
   const [error, setError] = useState("");
   const { currentUser } = useProfile();
   const { logout } = useAuth();
-  console.log(currentUser);
 
   async function handleRegister(e) {
     e.preventDefault();

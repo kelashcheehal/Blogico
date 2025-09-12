@@ -12,7 +12,7 @@ export default function SearchModal({ isOpen, onClose }) {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false); // track if search was attempted
-
+  const [error, setError] = useState(null);
   const handleSearch = async (e) => {
     e.preventDefault();
 
@@ -29,7 +29,7 @@ export default function SearchModal({ isOpen, onClose }) {
       );
 
     if (error) {
-      console.log(error);
+      setError(error);
       setBlogs([]);
     } else {
       setBlogs(data || []);

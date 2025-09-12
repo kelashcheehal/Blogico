@@ -18,6 +18,9 @@ import RichTextEditor from "@/components/rich-text-editor";
 import { useProfile } from "@/contexts/profile-context";
 import { supabase } from "@/lib/supabaseClient";
 export default function BlogModal({ isOpen, onClose, blog = null }) {
+  const profileData = useProfile();
+  const authorData = profileData;
+  console.log(authorData?.displayName);
   const [formData, setFormData] = useState({
     title: "",
     slug: "",
@@ -26,6 +29,10 @@ export default function BlogModal({ isOpen, onClose, blog = null }) {
     tags: "",
     category: "",
     status: "draft",
+    author_id: authorData?.id,
+    author_name: authorData?.displayName,
+    author_email: authorData?.email,
+    author_avatar_url: authorData?.avatar_url,
   });
   const { currentUser } = useProfile();
   const author_id = currentUser?.id;
@@ -102,7 +109,10 @@ export default function BlogModal({ isOpen, onClose, blog = null }) {
           title: formData.title,
           content: formData.content,
           category: formData.category,
-          author_id: author_id, // sirf uuid save hoga
+          author_id: author_id,
+          author_name: authorData?.displayName,
+          author_email: authorData?.email,
+          author_avatar_url: authorData?.avatar_url,
         },
       ])
       .select(); // insert ke baad row return karega

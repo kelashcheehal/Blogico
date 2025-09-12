@@ -35,7 +35,6 @@ export default function Navbar() {
   const { profileData, avatarUrl, avatarFallback } = useProfile();
   const { logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  console.log(profileData);
 
   const favoriteBlogs = [
     { id: 1, title: "Getting Started with React", author: "Jane Smith" },

@@ -75,7 +75,7 @@ export default function HomePage() {
                 {/* Footer */}
                 <div className="px-2 pb-1 flex justify-between text-[10px] text-gray-400">
                   <span>{new Date(blog.created_at).toLocaleDateString()}</span>
-                  <span>By {blog.author_id}</span>
+                  <span>By {blog.author_name}</span>
                 </div>
 
                 {/* Actions */}
