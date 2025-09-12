@@ -5,7 +5,7 @@ const BlogContext = createContext(null);
 
 const BlogProvider = ({ children }) => {
   const [blogs, setBlogs] = useState([]);
-console.log(blogs);
+  console.log(blogs);
 
   useEffect(() => {
     async function getBlogs() {
@@ -23,14 +23,11 @@ console.log(blogs);
   const value = useMemo(
     () => ({
       blogs,
+      setBlogs,
     }),
-    [blogs]
+    [blogs, setBlogs]
   );
-  return (
-    <BlogContext.Provider value={{ blogs, setBlogs }}>
-      {children}
-    </BlogContext.Provider>
-  );
+  return <BlogContext.Provider value={value}>{children}</BlogContext.Provider>;
 };
 
 export const useBlog = () => useContext(BlogContext);
