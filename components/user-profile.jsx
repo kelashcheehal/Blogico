@@ -41,7 +41,6 @@ export default function UserProfileModal({ open, onOpenChange }) {
                 {avatarFallback || "?"}
               </AvatarFallback>
             </Avatar>
-
             <div>
               <div className="font-medium">{userName}</div>
               <div className="text-sm text-muted-foreground">{email}</div>

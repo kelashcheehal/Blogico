@@ -23,6 +23,7 @@ import SearchModal from "./search-modal";
 import { AuthModal } from "./auth-modal";
 import { useProfile } from "@/contexts/profile-context";
 import BlogModal from "./blog-modal";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -31,10 +32,11 @@ export default function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isBlogOpen, setIsBlogOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
   const { profileData, avatarUrl, avatarFallback } = useProfile();
+  const { logout } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+  console.log(profileData);
 
-  // Mock favorite blogs
   const favoriteBlogs = [
     { id: 1, title: "Getting Started with React", author: "Jane Smith" },
     { id: 2, title: "Advanced JavaScript Patterns", author: "Mike Johnson" },
@@ -54,7 +56,6 @@ export default function Navbar() {
     []
   );
 
-  // Prevent body scroll when mobile menu is open
   useEffect(() => {
     document.body.style.overflow = isMobileMenuOpen ? "hidden" : "unset";
     return () => {
@@ -64,11 +65,6 @@ export default function Navbar() {
 
   const handleLogin = () => {
     setIsLoggedIn(true);
-    setIsProfileOpen(false);
-  };
-
-  const handleLogout = () => {
-    setIsLoggedIn(false);
     setIsProfileOpen(false);
   };
 
@@ -110,7 +106,7 @@ export default function Navbar() {
             {/* Action Buttons */}
             <div className="flex items-center gap-1">
               {/* Search Button */}
-               <Button
+              <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsBlogOpen(true)}
@@ -156,7 +152,6 @@ export default function Navbar() {
           </div>
         </div>
       </nav>
-
       {/* Mobile Sidebar Menu */}
       <div
         className={cn(
@@ -243,7 +238,6 @@ export default function Navbar() {
           </div>
         </div>
       </div>
-
       {/* Modals */}
       <SearchModal
         isOpen={isSearchOpen}
@@ -260,10 +254,21 @@ export default function Navbar() {
         isLoggedIn={isLoggedIn}
         user={profileData}
         onLogin={handleLogin}
-        onLogout={handleLogout}
+        onLogout={logout}
       />
-
-      <BlogModal isOpen={isBlogOpen} onClose={() => setIsBlogOpen(false)} />
+      {/* Blog Modal OR Auth Modal */}
+      {profileData ? (
+        <BlogModal isOpen={isBlogOpen} onClose={() => setIsBlogOpen(false)} />
+      ) : (
+        <AuthModal
+          isOpen={isBlogOpen}
+          onClose={() => setIsBlogOpen(false)}
+          isLoggedIn={isLoggedIn}
+          user={profileData}
+          onLogin={handleLogin}
+          onLogout={logout}
+        />
+      )}
     </>
   );
 }

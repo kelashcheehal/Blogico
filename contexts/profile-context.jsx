@@ -80,6 +80,7 @@ const ProfileProvider = ({ children }) => {
       avatarFallback,
       profileData,
       isLoading,
+      
     }),
     [
       currentUser,
@@ -88,6 +89,7 @@ const ProfileProvider = ({ children }) => {
       avatarFallback,
       profileData,
       isLoading,
+
     ]
   );
 

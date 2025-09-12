@@ -14,10 +14,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
 import RichTextEditor from "@/components/rich-text-editor";
-
-export default function BlogModal({ isOpen, onClose, blog = null, onSave }) {
+import { useProfile } from "@/contexts/profile-context";
+import { supabase } from "@/lib/supabaseClient";
+export default function BlogModal({ isOpen, onClose, blog = null }) {
   const [formData, setFormData] = useState({
     title: "",
     slug: "",
@@ -27,11 +27,8 @@ export default function BlogModal({ isOpen, onClose, blog = null, onSave }) {
     category: "",
     status: "draft",
   });
-  const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState({});
-
-  const isEditMode = !!blog;
-
+  const { currentUser } = useProfile();
+  const author_id = currentUser?.id;
   const categories = [
     "Technology",
     "Tutorial",
@@ -45,16 +42,6 @@ export default function BlogModal({ isOpen, onClose, blog = null, onSave }) {
     "Other",
   ];
 
-  const generateSlug = (title) => {
-    return title
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "") // Remove special characters
-      .replace(/\s+/g, "-") // Replace spaces with hyphens
-      .replace(/-+/g, "-") // Replace multiple hyphens with single
-      .trim("-"); // Remove leading/trailing hyphens
-  };
-
-  // Initialize form data when blog prop changes
   useEffect(() => {
     if (blog) {
       setFormData({
@@ -77,102 +64,56 @@ export default function BlogModal({ isOpen, onClose, blog = null, onSave }) {
         status: "draft",
       });
     }
-    setErrors({});
   }, [blog, isOpen]);
 
-  // Prevent body scroll when modal is open
+  // Prevent scrolling when modal is open
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
+    document.body.style.overflow = isOpen ? "hidden" : "unset";
+    return () => (document.body.style.overflow = "unset");
   }, [isOpen]);
 
   const handleInputChange = (field, value) => {
-    setFormData((prev) => {
-      const newData = { ...prev, [field]: value };
-
-      if (field === "title") {
-        newData.slug = generateSlug(value);
-      }
-
-      return newData;
-    });
-
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
-    }
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const validateForm = () => {
-    const newErrors = {};
+  const handleThumbnailUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-    if (!formData.title.trim()) {
-      newErrors.title = "Post ka naam required hai";
-    }
-
-    if (!formData.slug.trim()) {
-      newErrors.slug = "Slug required hai";
-    }
-
-    if (!formData.content.trim()) {
-      newErrors.content = "Content required hai";
-    }
-
-    if (!formData.category) {
-      newErrors.category = "Category select karni hai";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setFormData((prev) => ({ ...prev, thumbnail: ev.target.result }));
+    };
+    reader.readAsDataURL(file);
   };
 
-  const handleThumbnailUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setFormData((prev) => ({ ...prev, thumbnail: e.target.result }));
-      };
-      reader.readAsDataURL(file);
+  const handleSave = (e) => {
+    e.preventDefault();
+    console.log("Save Data:", formData);
+    onClose();
+  };
+
+  async function handlePublish(formData) {
+    const { data, error } = await supabase
+      .from("blogs")
+      .insert([
+        {
+          thumbnail: formData.thumbnail,
+          title: formData.title,
+          content: formData.content,
+          category: formData.category,
+          author_id: author_id, // sirf uuid save hoga
+        },
+      ])
+      .select(); // insert ke baad row return karega
+
+    if (error) {
+      console.error("Insert error:", error.message);
+    } else {
+      console.log(formData);
+      console.log("Blog inserted:", data);
     }
-  };
-
-  const handleSave = async () => {
-    if (!validateForm()) return;
-
-    setIsLoading(true);
-    try {
-      const blogData = {
-        ...formData,
-        tags: formData.tags
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter(Boolean),
-        updatedAt: new Date().toISOString(),
-        ...(isEditMode
-          ? { id: blog.id }
-          : { createdAt: new Date().toISOString() }),
-      };
-
-      await onSave(blogData);
-      onClose();
-    } catch (error) {
-      console.error("Error saving blog:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handlePublish = async () => {
-    setFormData((prev) => ({ ...prev, status: "published" }));
-    setTimeout(() => handleSave(), 0);
-  };
+  }
 
   if (!isOpen) return null;
 
@@ -189,13 +130,13 @@ export default function BlogModal({ isOpen, onClose, blog = null, onSave }) {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b bg-muted/30">
           <div className="flex items-center gap-3">
-            {isEditMode ? (
+            {blog ? (
               <Edit3 className="h-5 w-5 text-primary" />
             ) : (
               <Plus className="h-5 w-5 text-primary" />
             )}
             <h2 className="text-xl font-semibold">
-              {isEditMode ? "Blog Post Edit Karein" : "Naya Blog Post Banayein"}
+              {blog ? "Blog Post Edit Karein" : "Naya Blog Post Banayein"}
             </h2>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -203,52 +144,39 @@ export default function BlogModal({ isOpen, onClose, blog = null, onSave }) {
           </Button>
         </div>
 
-        {/* Content */}
+        {/* Body */}
         <div className="overflow-y-auto max-h-[calc(90vh-140px)]">
           <div className="p-6 space-y-6">
             {/* Title */}
             <div className="space-y-2">
-              <Label htmlFor="title" className="text-sm font-medium">
-                Post ka Naam (Title) *
-              </Label>
+              <Label htmlFor="title">Post ka Naam *</Label>
               <Input
                 id="title"
-                placeholder="Jaise: How to Build a Blog with Next.js and Supabase"
+                placeholder="Jaise: How to Build a Blog with Next.js"
                 value={formData.title}
                 onChange={(e) => handleInputChange("title", e.target.value)}
-                className={cn(errors.title && "border-destructive")}
               />
-              {errors.title && (
-                <p className="text-sm text-destructive">{errors.title}</p>
-              )}
             </div>
 
+            {/* Slug */}
             <div className="space-y-2">
-              <Label htmlFor="slug" className="text-sm font-medium">
-                Slug (SEO-friendly URL) *
-              </Label>
+              <Label htmlFor="slug">Slug *</Label>
               <Input
                 id="slug"
-                placeholder="how-to-build-blog-nextjs-supabase"
+                placeholder="how-to-build-blog-nextjs"
                 value={formData.slug}
                 onChange={(e) => handleInputChange("slug", e.target.value)}
-                className={cn(errors.slug && "border-destructive")}
               />
-              {errors.slug && (
-                <p className="text-sm text-destructive">{errors.slug}</p>
-              )}
               <p className="text-xs text-muted-foreground">
-                URL me use hoga: /blog/{formData.slug}
+                URL: /blog/{formData.slug}
               </p>
             </div>
 
+            {/* Thumbnail */}
             <div className="space-y-2">
-              <Label
-                htmlFor="thumbnail"
-                className="text-sm font-medium flex items-center gap-2"
-              >
+              <Label className="flex items-center gap-2">
                 <ImageIcon className="h-4 w-4" />
-                Cover Image / Thumbnail (Optional lekin Recommended)
+                Cover Image
               </Label>
               <div className="flex items-center gap-4">
                 <Input
@@ -262,162 +190,72 @@ export default function BlogModal({ isOpen, onClose, blog = null, onSave }) {
                   type="button"
                   variant="outline"
                   onClick={() => document.getElementById("thumbnail").click()}
-                  className="flex items-center gap-2"
                 >
-                  <Upload className="h-4 w-4" />
-                  Image Upload Karein
+                  <Upload className="h-4 w-4 mr-1" />
+                  Upload
                 </Button>
                 {formData.thumbnail && (
-                  <div className="flex items-center gap-2">
-                    <img
-                      src={formData.thumbnail || "/placeholder.svg"}
-                      alt="Thumbnail preview"
-                      className="h-12 w-12 object-cover rounded border"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        setFormData((prev) => ({ ...prev, thumbnail: "" }))
-                      }
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <img
+                    src={formData.thumbnail}
+                    alt="Thumbnail preview"
+                    className="h-12 w-12 object-cover rounded border"
+                  />
                 )}
               </div>
             </div>
 
             {/* Content */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium">
-                Content (Rich Text Editor - Images, Links, Formatting ke sath) *
-              </Label>
-              <div
-                className={cn(
-                  "rounded-lg",
-                  errors.content && "border border-destructive"
-                )}
-              >
-                <RichTextEditor
-                  content={formData.content}
-                  onChange={(content) => handleInputChange("content", content)}
-                  placeholder="Apna blog post content yahan likhein... Images add kar sakte ho, text format kar sakte ho!"
-                />
-              </div>
-              {errors.content && (
-                <p className="text-sm text-destructive">{errors.content}</p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                💡 Tip: Image button se multiple images add kar sakte ho content
-                ke beech me!
-              </p>
+              <Label>Content *</Label>
+              <RichTextEditor
+                content={formData.content}
+                onChange={(content) => handleInputChange("content", content)}
+                placeholder="Apna blog post content yahan likhein..."
+              />
             </div>
 
-            {/* Tags and Category Row */}
+            {/* Tags + Category */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Tags */}
               <div className="space-y-2">
-                <Label
-                  htmlFor="tags"
-                  className="text-sm font-medium flex items-center gap-2"
-                >
-                  <Tag className="h-4 w-4" />
-                  Tags (Keywords)
+                <Label className="flex items-center gap-2">
+                  <Tag className="h-4 w-4" /> Tags
                 </Label>
                 <Input
-                  id="tags"
                   placeholder="Next.js, Supabase, Tutorial"
                   value={formData.tags}
                   onChange={(e) => handleInputChange("tags", e.target.value)}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Comma se separate karein
-                </p>
               </div>
-
               <div className="space-y-2">
-                <Label htmlFor="category" className="text-sm font-medium">
-                  Category *
-                </Label>
+                <Label>Category *</Label>
                 <Select
                   value={formData.category}
-                  onValueChange={(value) =>
-                    handleInputChange("category", value)
-                  }
+                  onValueChange={(val) => handleInputChange("category", val)}
                 >
-                  <SelectTrigger
-                    className={cn(errors.category && "border-destructive")}
-                  >
+                  <SelectTrigger>
                     <SelectValue placeholder="Category select karein" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
+                    {categories.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.category && (
-                  <p className="text-sm text-destructive">{errors.category}</p>
-                )}
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Status</Label>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    id="draft"
-                    name="status"
-                    value="draft"
-                    checked={formData.status === "draft"}
-                    onChange={(e) =>
-                      handleInputChange("status", e.target.value)
-                    }
-                    className="h-4 w-4"
-                  />
-                  <Label htmlFor="draft" className="text-sm cursor-pointer">
-                    Draft (Save karke baad me publish)
-                  </Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    id="published"
-                    name="status"
-                    value="published"
-                    checked={formData.status === "published"}
-                    onChange={(e) =>
-                      handleInputChange("status", e.target.value)
-                    }
-                    className="h-4 w-4"
-                  />
-                  <Label htmlFor="published" className="text-sm cursor-pointer">
-                    Published (Abhi publish kar do)
-                  </Label>
-                </div>
-              </div>
-            </div>
-
-            {/* Preview Tags */}
+            {/* Tag Preview */}
             {formData.tags && (
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Tag Preview:</Label>
+                <Label>Tag Preview:</Label>
                 <div className="flex flex-wrap gap-2">
-                  {formData.tags.split(",").map((tag, index) => {
-                    const trimmedTag = tag.trim();
-                    if (!trimmedTag) return null;
-                    return (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {trimmedTag}
-                      </Badge>
-                    );
-                  })}
+                  {formData.tags.split(",").map((tag, i) => (
+                    <Badge key={i} variant="outline">
+                      {tag.trim()}
+                    </Badge>
+                  ))}
                 </div>
               </div>
             )}
@@ -428,24 +266,21 @@ export default function BlogModal({ isOpen, onClose, blog = null, onSave }) {
         <div className="flex items-center justify-between p-6 border-t bg-muted/30">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="h-4 w-4" />
-            {isEditMode ? "Last updated" : "Created"}:{" "}
+            {blog ? "Last updated" : "Created"}:{" "}
             {new Date().toLocaleDateString()}
           </div>
-
           <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={onClose} disabled={isLoading}>
+            <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button variant="outline" onClick={handleSave} disabled={isLoading}>
-              <Save className="h-4 w-4 mr-2" />
-              {formData.status === "draft" ? "Save Draft" : "Save"}
+            <Button variant="outline" onClick={handleSave}>
+              <Save className="h-4 w-4 mr-1" /> Save
             </Button>
             <Button
-              onClick={handlePublish}
-              disabled={isLoading}
-              className="bg-primary hover:bg-primary/90"
+              onClick={() => handlePublish(formData)}
+              className="bg-primary text-white"
             >
-              {isLoading ? "Publishing..." : "Publish"}
+              Publish
             </Button>
           </div>
         </div>

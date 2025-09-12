@@ -1,9 +1,9 @@
 "use client";
 
+import { motion } from "framer-motion";
 import ResizeImage from "tiptap-extension-resize-image";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import TextAlign from "@tiptap/extension-text-align";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -71,241 +71,214 @@ const MenuBar = ({ editor }) => {
     }
   };
 
-  if (!editor) {
-    return null;
-  }
+  if (!editor) return null;
 
   return (
-    <div className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur-md p-3 flex flex-wrap gap-1 transition-all duration-300">
-      {/* Text Formatting Group */}
-      <div className="flex items-center gap-1 p-1 rounded-lg bg-muted/30 transition-all duration-200 hover:bg-muted/50">
-        <Button
-          variant={editor.isActive("bold") ? "default" : "ghost"}
-          size="icon"
-          className="h-8 w-8 transition-all duration-200 hover:scale-105 active:scale-95"
-          onClick={() => editor.chain().focus().toggleBold().run()}
-        >
-          <Bold className="h-4 w-4" />
-        </Button>
-        <Button
-          variant={editor.isActive("italic") ? "default" : "ghost"}
-          size="icon"
-          className="h-8 w-8 transition-all duration-200 hover:scale-105 active:scale-95"
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-        >
-          <Italic className="h-4 w-4" />
-        </Button>
-        <Button
-          variant={editor.isActive("strike") ? "default" : "ghost"}
-          size="icon"
-          className="h-8 w-8 transition-all duration-200 hover:scale-105 active:scale-95"
-          onClick={() => editor.chain().focus().toggleStrike().run()}
-        >
-          <Strikethrough className="h-4 w-4" />
-        </Button>
-        <Button
-          variant={editor.isActive("code") ? "default" : "ghost"}
-          size="icon"
-          className="h-8 w-8 transition-all duration-200 hover:scale-105 active:scale-95"
-          onClick={() => editor.chain().focus().toggleCode().run()}
-        >
-          <Code className="h-4 w-4" />
-        </Button>
+    <motion.div
+      className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur-md p-3 flex flex-wrap gap-1 shadow-sm"
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 120, damping: 15 }}
+    >
+      {/* === Text Formatting === */}
+      <div className="flex items-center gap-1 p-1 rounded-lg bg-muted/40">
+        {[
+          {
+            cmd: () => editor.chain().focus().toggleBold().run(),
+            icon: Bold,
+            active: "bold",
+          },
+          {
+            cmd: () => editor.chain().focus().toggleItalic().run(),
+            icon: Italic,
+            active: "italic",
+          },
+          {
+            cmd: () => editor.chain().focus().toggleStrike().run(),
+            icon: Strikethrough,
+            active: "strike",
+          },
+          {
+            cmd: () => editor.chain().focus().toggleCode().run(),
+            icon: Code,
+            active: "code",
+          },
+        ].map(({ cmd, icon: Icon, active }, i) => (
+          <motion.div
+            key={i}
+            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.1 }}
+          >
+            <Button
+              variant={editor.isActive(active) ? "default" : "ghost"}
+              size="icon"
+              className="h-8 w-8"
+              onClick={cmd}
+            >
+              <Icon className="h-4 w-4" />
+            </Button>
+          </motion.div>
+        ))}
       </div>
 
-      <div className="w-px h-8 bg-border/50 mx-2" />
-
-      {/* Headings Group */}
-      <div className="flex items-center gap-1 p-1 rounded-lg bg-muted/30 transition-all duration-200 hover:bg-muted/50">
-        <Button
-          variant={
-            editor.isActive("heading", { level: 1 }) ? "default" : "ghost"
-          }
-          size="icon"
-          className="h-8 w-8 transition-all duration-200 hover:scale-105 active:scale-95"
-          onClick={() =>
-            editor.chain().focus().toggleHeading({ level: 1 }).run()
-          }
-        >
-          <Heading1 className="h-4 w-4" />
-        </Button>
-        <Button
-          variant={
-            editor.isActive("heading", { level: 2 }) ? "default" : "ghost"
-          }
-          size="icon"
-          className="h-8 w-8 transition-all duration-200 hover:scale-105 active:scale-95"
-          onClick={() =>
-            editor.chain().focus().toggleHeading({ level: 2 }).run()
-          }
-        >
-          <Heading2 className="h-4 w-4" />
-        </Button>
-        <Button
-          variant={
-            editor.isActive("heading", { level: 3 }) ? "default" : "ghost"
-          }
-          size="icon"
-          className="h-8 w-8 transition-all duration-200 hover:scale-105 active:scale-95"
-          onClick={() =>
-            editor.chain().focus().toggleHeading({ level: 3 }).run()
-          }
-        >
-          <Heading3 className="h-4 w-4" />
-        </Button>
+      {/* === Headings === */}
+      <div className="flex items-center gap-1 p-1 rounded-lg bg-muted/40">
+        {[1, 2, 3].map((level) => {
+          const Icon = [Heading1, Heading2, Heading3][level - 1];
+          return (
+            <motion.div
+              key={level}
+              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.1 }}
+            >
+              <Button
+                variant={
+                  editor.isActive("heading", { level }) ? "default" : "ghost"
+                }
+                size="icon"
+                className="h-8 w-8"
+                onClick={() =>
+                  editor.chain().focus().toggleHeading({ level }).run()
+                }
+              >
+                <Icon className="h-4 w-4" />
+              </Button>
+            </motion.div>
+          );
+        })}
       </div>
 
-      <div className="w-px h-8 bg-border/50 mx-2" />
-
-      {/* Lists Group */}
-      <div className="flex items-center gap-1 p-1 rounded-lg bg-muted/30 transition-all duration-200 hover:bg-muted/50">
-        <Button
-          variant={editor.isActive("bulletList") ? "default" : "ghost"}
-          size="icon"
-          className="h-8 w-8 transition-all duration-200 hover:scale-105 active:scale-95"
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-        >
-          <List className="h-4 w-4" />
-        </Button>
-        <Button
-          variant={editor.isActive("orderedList") ? "default" : "ghost"}
-          size="icon"
-          className="h-8 w-8 transition-all duration-200 hover:scale-105 active:scale-95"
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        >
-          <ListOrdered className="h-4 w-4" />
-        </Button>
-        <Button
-          variant={editor.isActive("blockquote") ? "default" : "ghost"}
-          size="icon"
-          className="h-8 w-8 transition-all duration-200 hover:scale-105 active:scale-95"
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-        >
-          <Quote className="h-4 w-4" />
-        </Button>
+      {/* === Lists === */}
+      <div className="flex items-center gap-1 p-1 rounded-lg bg-muted/40">
+        {[
+          {
+            cmd: () => editor.chain().focus().toggleBulletList().run(),
+            icon: List,
+            active: "bulletList",
+          },
+          {
+            cmd: () => editor.chain().focus().toggleOrderedList().run(),
+            icon: ListOrdered,
+            active: "orderedList",
+          },
+          {
+            cmd: () => editor.chain().focus().toggleBlockquote().run(),
+            icon: Quote,
+            active: "blockquote",
+          },
+        ].map(({ cmd, icon: Icon, active }, i) => (
+          <motion.div
+            key={i}
+            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.1 }}
+          >
+            <Button
+              variant={editor.isActive(active) ? "default" : "ghost"}
+              size="icon"
+              className="h-8 w-8"
+              onClick={cmd}
+            >
+              <Icon className="h-4 w-4" />
+            </Button>
+          </motion.div>
+        ))}
       </div>
 
-      <div className="w-px h-8 bg-border/50 mx-2" />
-
-      {/* Alignment Group */}
-      <div className="flex items-center gap-1 p-1 rounded-lg bg-muted/30 transition-all duration-200 hover:bg-muted/50">
-        <Button
-          variant={editor.isActive({ textAlign: "left" }) ? "default" : "ghost"}
-          size="icon"
-          className="h-8 w-8 transition-all duration-200 hover:scale-105 active:scale-95"
-          onClick={() => editor.chain().focus().setTextAlign("left").run()}
-        >
-          <AlignLeft className="h-4 w-4" />
-        </Button>
-        <Button
-          variant={
-            editor.isActive({ textAlign: "center" }) ? "default" : "ghost"
-          }
-          size="icon"
-          className="h-8 w-8 transition-all duration-200 hover:scale-105 active:scale-95"
-          onClick={() => editor.chain().focus().setTextAlign("center").run()}
-        >
-          <AlignCenter className="h-4 w-4" />
-        </Button>
-        <Button
-          variant={
-            editor.isActive({ textAlign: "right" }) ? "default" : "ghost"
-          }
-          size="icon"
-          className="h-8 w-8 transition-all duration-200 hover:scale-105 active:scale-95"
-          onClick={() => editor.chain().focus().setTextAlign("right").run()}
-        >
-          <AlignRight className="h-4 w-4" />
-        </Button>
-        <Button
-          variant={
-            editor.isActive({ textAlign: "justify" }) ? "default" : "ghost"
-          }
-          size="icon"
-          className="h-8 w-8 transition-all duration-200 hover:scale-105 active:scale-95"
-          onClick={() => editor.chain().focus().setTextAlign("justify").run()}
-        >
-          <AlignJustify className="h-4 w-4" />
-        </Button>
+      {/* === Alignment === */}
+      <div className="flex items-center gap-1 p-1 rounded-lg bg-muted/40">
+        {[
+          { align: "left", icon: AlignLeft },
+          { align: "center", icon: AlignCenter },
+          { align: "right", icon: AlignRight },
+          { align: "justify", icon: AlignJustify },
+        ].map(({ align, icon: Icon }) => (
+          <motion.div
+            key={align}
+            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.1 }}
+          >
+            <Button
+              variant={
+                editor.isActive({ textAlign: align }) ? "default" : "ghost"
+              }
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => editor.chain().focus().setTextAlign(align).run()}
+            >
+              <Icon className="h-4 w-4" />
+            </Button>
+          </motion.div>
+        ))}
       </div>
 
-      <div className="w-px h-8 bg-border/50 mx-2" />
+      {/* === Media === */}
+      <div className="flex items-center gap-1 p-1 rounded-lg bg-muted/40">
+        <motion.div whileTap={{ scale: 0.9 }} whileHover={{ scale: 1.1 }}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={addImage}
+            disabled={isUploading}
+          >
+            {isUploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ImageIcon className="h-4 w-4" />
+            )}
+          </Button>
+        </motion.div>
+        <motion.div whileTap={{ scale: 0.9 }} whileHover={{ scale: 1.1 }}>
+          <Button
+            variant={editor.isActive("link") ? "default" : "ghost"}
+            size="icon"
+            onClick={() => setShowLinkInput(!showLinkInput)}
+          >
+            <LinkIcon className="h-4 w-4" />
+          </Button>
+        </motion.div>
+      </div>
 
-      {/* Media Group */}
-      <div className="flex items-center gap-1 p-1 rounded-lg bg-muted/30 transition-all duration-200 hover:bg-muted/50">
+      {/* === History === */}
+      <div className="flex items-center gap-1 p-1 rounded-lg bg-muted/40">
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 transition-all duration-200 hover:scale-105 active:scale-95"
-          onClick={addImage}
-          disabled={isUploading}
-        >
-          {isUploading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <ImageIcon className="h-4 w-4" />
-          )}
-        </Button>
-        <Button
-          variant={editor.isActive("link") ? "default" : "ghost"}
-          size="icon"
-          className="h-8 w-8 transition-all duration-200 hover:scale-105 active:scale-95"
-          onClick={() => setShowLinkInput(!showLinkInput)}
-        >
-          <LinkIcon className="h-4 w-4" />
-        </Button>
-      </div>
-
-      <div className="w-px h-8 bg-border/50 mx-2" />
-
-      {/* History Group */}
-      <div className="flex items-center gap-1 p-1 rounded-lg bg-muted/30 transition-all duration-200 hover:bg-muted/50">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
-          onClick={() => editor.chain().focus().undo().run()}
           disabled={!editor.can().chain().focus().undo().run()}
+          onClick={() => editor.chain().focus().undo().run()}
         >
           <Undo className="h-4 w-4" />
         </Button>
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
-          onClick={() => editor.chain().focus().redo().run()}
           disabled={!editor.can().chain().focus().redo().run()}
+          onClick={() => editor.chain().focus().redo().run()}
         >
           <Redo className="h-4 w-4" />
         </Button>
       </div>
 
       {showLinkInput && (
-        <div className="flex items-center gap-2 ml-2 animate-in slide-in-from-left-2 duration-300">
+        <motion.div
+          className="flex items-center gap-2 ml-2"
+          initial={{ x: -10, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+        >
           <Input
             type="url"
             placeholder="Enter URL"
             value={linkUrl}
             onChange={(e) => setLinkUrl(e.target.value)}
-            className="w-48 transition-all duration-200 focus:w-56"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                setLink();
-              }
-            }}
+            className="w-48"
+            onKeyDown={(e) => e.key === "Enter" && setLink()}
             autoFocus
           />
-          <Button
-            size="sm"
-            onClick={setLink}
-            className="transition-all duration-200 hover:scale-105 active:scale-95"
-          >
+          <Button size="sm" onClick={setLink}>
             Add
           </Button>
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 };
 
@@ -319,46 +292,43 @@ export default function RichTextEditor({
       StarterKit,
       ResizeImage.configure({
         HTMLAttributes: {
-          class:
-            "rounded-xl my-6 shadow-lg transition-all duration-300 hover:shadow-xl",
+          class: "rounded-xl my-6 shadow-lg hover:shadow-xl transition",
         },
       }),
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
-          class:
-            "text-primary underline cursor-pointer transition-colors duration-200 hover:text-primary/80",
+          class: "text-primary underline hover:text-primary/80 transition",
         },
       }),
-      TextAlign.configure({
-        types: ["heading", "paragraph"],
-      }),
-      Placeholder.configure({
-        placeholder,
-      }),
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      Placeholder.configure({ placeholder }),
     ],
     content,
-    onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
-    },
+    onUpdate: ({ editor }) => onChange(editor.getHTML()),
     editorProps: {
       attributes: {
         class:
           "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none min-h-[400px] p-6 transition-all duration-300",
       },
     },
-    immediatelyRender: false, // 👈 ye line zaroor rakho
+    immediatelyRender: false,
   });
 
   return (
-    <div className="border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 bg-background">
+    <motion.div
+      className="border rounded-xl overflow-hidden shadow-sm bg-background"
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
       <MenuBar editor={editor} />
-      <div className="relative max-h-[600px] overflow-auto">
+      <div className="relative max-h-[600px] overflow-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
         <EditorContent
           editor={editor}
-          className="focus-within:ring-2 focus-within:ring-primary/20 focus-within:ring-offset-2 transition-all duration-200 rounded-b-xl"
+          className="focus-within:ring-2 focus-within:ring-primary/20 focus-within:ring-offset-2 rounded-b-xl"
         />
       </div>
-    </div>
+    </motion.div>
   );
 }
